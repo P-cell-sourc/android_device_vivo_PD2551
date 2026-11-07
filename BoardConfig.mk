@@ -49,23 +49,27 @@ TARGET_NO_BOOTLOADER := true
 # ==========================================================================
 
 BOARD_BOOTIMG_HEADER_VERSION := 4
-BOARD_KERNEL_BASE := 0x3fff8000
+BOARD_KERNEL_BASE := 0x40000000
 BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2 erofs.reserved_pages=256 product.version=PD2551_A_16.0.15.3.W10 fingerprint.abbr=15/AP3A.240905.015.A2 region_ver=W10 product.solution=MTK
 BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
 BOARD_KERNEL_PAGESIZE := 4096
 BOARD_KERNEL_OFFSET := 0x00008000
-BOARD_RAMDISK_OFFSET := 0x26f08000
-BOARD_SECOND_OFFSET := 0xc0008000
-BOARD_KERNEL_TAGS_OFFSET := 0x07c88000
-BOARD_DTB_OFFSET := 0x07c88000
-BOARD_MKBOOTIMG_ARGS += --header_version 4
-BOARD_MKBOOTIMG_ARGS += --base 0x3fff8000
-BOARD_MKBOOTIMG_ARGS += --kernel_offset 0x00008000
-BOARD_MKBOOTIMG_ARGS += --ramdisk_offset 0x26f08000
-BOARD_MKBOOTIMG_ARGS += --second_offset 0xc0008000
-BOARD_MKBOOTIMG_ARGS += --tags_offset 0x07c88000
-BOARD_MKBOOTIMG_ARGS += --dtb_offset 0x07c88000
-BOARD_KERNEL_IMAGE_NAME := kernel
+BOARD_RAMDISK_OFFSET := 0x07c08000
+BOARD_SECOND_OFFSET := 0x00e88000
+BOARD_KERNEL_TAGS_OFFSET := 0x07808000
+BOARD_DTB_OFFSET := 0x01f08000
+# 单条 := 赋值 (CI check-boot-offsets.sh 只解析 :=/= 形式, 不解析 +=)
+BOARD_MKBOOTIMG_ARGS := \
+    --header_version 4 \
+    --base 0x40000000 \
+    --kernel_offset 0x00008000 \
+    --ramdisk_offset 0x07c08000 \
+    --second_offset 0x00e88000 \
+    --tags_offset 0x07808000 \
+    --dtb_offset 0x01f08000
+BOARD_KERNEL_IMAGE_NAME := Image
+TARGET_KERNEL_CONFIG := PD2551_defconfig
+TARGET_KERNEL_SOURCE := kernel/vivo/PD2551
 
 TARGET_FORCE_PREBUILT_KERNEL := true
 ifeq ($(TARGET_FORCE_PREBUILT_KERNEL),true)
@@ -89,7 +93,6 @@ BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE := true
 BOARD_FLASH_BLOCK_SIZE := 262144 # (BOARD_KERNEL_PAGESIZE * 64)
 BOARD_BOOTIMAGE_PARTITION_SIZE := 134217728
 BOARD_RECOVERYIMAGE_PARTITION_SIZE := 134217728
-BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 134217728
 BOARD_HAS_LARGE_FILESYSTEM := true
 BOARD_SUPER_PARTITION_SIZE := 9126805504 # TODO: Fix hardcoded value
 BOARD_SUPER_PARTITION_GROUPS := vivo_dynamic_partitions
@@ -213,6 +216,8 @@ TW_CUSTOM_CPU_TEMP_PATH := /sys/class/power_supply/battery/temp
 TW_STATUS_ICONS_ALIGN := center
 TW_CUSTOM_CLOCK_POS := 610
 TW_NO_FASTBOOT_BOOT := true
+
+TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/recovery/root/system/etc/recovery.fstab
 TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
 
 # --- Data decryption (single source of truth; do not duplicate in device.mk) ---
