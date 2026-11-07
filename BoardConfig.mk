@@ -67,8 +67,9 @@ BOARD_MKBOOTIMG_ARGS := \
     --second_offset 0x00e88000 \
     --tags_offset 0x07808000 \
     --dtb_offset 0x01f08000
-BOARD_KERNEL_IMAGE_NAME := kernel
-
+BOARD_KERNEL_IMAGE_NAME := Image
+TARGET_KERNEL_CONFIG := PD2551_defconfig
+TARGET_KERNEL_SOURCE := kernel/vivo/PD2551
 
 TARGET_FORCE_PREBUILT_KERNEL := true
 ifeq ($(TARGET_FORCE_PREBUILT_KERNEL),true)
@@ -100,6 +101,9 @@ BOARD_VIVO_DYNAMIC_PARTITIONS_SIZE := 9122611200 # TODO: Fix hardcoded value
 
 # Filesystem: stock dynamic partitions are EROFS (matches official payload)
 TARGET_COPY_OUT_VENDOR := vendor
+TARGET_COPY_OUT_PRODUCT := product
+TARGET_COPY_OUT_SYSTEM_EXT := system_ext
+TARGET_COPY_OUT_ODM := odm
 TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_USE_F2FS := true
 TARGET_USERIMAGES_USE_EROFS := true
@@ -216,7 +220,7 @@ TW_STATUS_ICONS_ALIGN := center
 TW_CUSTOM_CLOCK_POS := 610
 TW_NO_FASTBOOT_BOOT := true
 
-
+TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/recovery/root/system/etc/recovery.fstab
 TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
 
 # --- Data decryption (single source of truth; do not duplicate in device.mk) ---
