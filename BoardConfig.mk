@@ -49,17 +49,25 @@ TARGET_NO_BOOTLOADER := true
 # ==========================================================================
 
 BOARD_BOOTIMG_HEADER_VERSION := 4
-BOARD_KERNEL_BASE := 0x40000000
+BOARD_KERNEL_BASE := 0x3fff8000
 BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2 erofs.reserved_pages=256 product.version=PD2551_A_16.0.15.3.W10 fingerprint.abbr=15/AP3A.240905.015.A2 region_ver=W10 product.solution=MTK
 BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
 BOARD_KERNEL_PAGESIZE := 4096
+BOARD_KERNEL_OFFSET := 0x00008000
 BOARD_RAMDISK_OFFSET := 0x26f08000
-BOARD_KERNEL_TAGS_OFFSET := 0x47c80000
-BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOTIMG_HEADER_VERSION)
-BOARD_MKBOOTIMG_ARGS += --ramdisk_offset $(BOARD_RAMDISK_OFFSET)
-BOARD_MKBOOTIMG_ARGS += --tags_offset $(BOARD_KERNEL_TAGS_OFFSET)
-BOARD_KERNEL_IMAGE_NAME := kernel
-
+BOARD_SECOND_OFFSET := 0xc0008000
+BOARD_KERNEL_TAGS_OFFSET := 0x07c88000
+BOARD_DTB_OFFSET := 0x07c88000
+BOARD_MKBOOTIMG_ARGS += --header_version 4
+BOARD_MKBOOTIMG_ARGS += --base 0x3fff8000
+BOARD_MKBOOTIMG_ARGS += --kernel_offset 0x00008000
+BOARD_MKBOOTIMG_ARGS += --ramdisk_offset 0x26f08000
+BOARD_MKBOOTIMG_ARGS += --second_offset 0xc0008000
+BOARD_MKBOOTIMG_ARGS += --tags_offset 0x07c88000
+BOARD_MKBOOTIMG_ARGS += --dtb_offset 0x07c88000
+BOARD_KERNEL_IMAGE_NAME := Image
+TARGET_KERNEL_CONFIG := PD2551_defconfig
+TARGET_KERNEL_SOURCE := kernel/vivo/PD2551
 
 TARGET_FORCE_PREBUILT_KERNEL := true
 ifeq ($(TARGET_FORCE_PREBUILT_KERNEL),true)
@@ -207,6 +215,7 @@ TW_STATUS_ICONS_ALIGN := center
 TW_CUSTOM_CLOCK_POS := 610
 TW_NO_FASTBOOT_BOOT := true
 
+TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/recovery/root/system/etc/recovery.fstab
 TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
 
 # --- Data decryption (single source of truth; do not duplicate in device.mk) ---
