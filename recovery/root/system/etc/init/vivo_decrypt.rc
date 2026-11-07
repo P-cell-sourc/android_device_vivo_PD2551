@@ -1,0 +1,20 @@
+# Ported from vivo PD2183 (MT6983) TWRP decryption scheme.
+# This file lives in /system/etc/init/ so Android init auto-imports it.
+# It wires the stock-recovery rc chain (platform.rc = keymint/gatekeeper/
+# keystore2/vold/mobicore services, touch.rc + vtsthp.rc = vivo vts touch)
+# into the TWRP ramdisk and starts prepdecrypt to set crypto.ready=1.
+
+import /init.recovery.platform.rc
+import /init.recovery.touch.rc
+import /vtsthp.rc
+import /init.recovery.svc.rc
+
+service prepdecrypt /system/bin/prepdecrypt.sh
+    user root
+    group root
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
+
+on fs
+    start prepdecrypt

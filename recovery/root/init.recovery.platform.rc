@@ -1,0 +1,153 @@
+import /init.recovery.mt6899.rc
+
+on early-init
+    copy /system/etc/vintf/manifest/android.hardware.boot-service.mtk.xml /vendor/etc/vintf/manifest/android.hardware.boot-service.mtk.xml
+    copy /system/etc/vintf/manifest/android.hardware.health-service.example.xml /vendor/etc/vintf/manifest/android.hardware.health-service.example.xml
+    chmod 0644 /vendor/etc/vintf/manifest/android.hardware.boot-service.mtk.xml
+    chmod 0644 /vendor/etc/vintf/manifest/android.hardware.health-service.example.xml
+    rm /system/etc/vintf/manifest/android.hardware.boot-service.mtk.xml
+    rm /system/etc/vintf/manifest/android.hardware.health-service.example.xml
+
+on init
+    #create mountpoint for /mnt/vendor/persist partition
+    mkdir /mnt/vendor/persist 0771 system system
+
+    symlink /vendor/lib64/hw/libSoftGatekeeper.so   /vendor/lib64/hw/gatekeeper.${ro.product.board}.so
+    symlink /vendor/lib64/hw/libMcGatekeeper.so   /vendor/lib64/hw/gatekeeper.${ro.product.board}.so
+
+on post-fs
+    chown system system /mnt/vendor/persist
+    chmod 0771 /mnt/vendor/persist
+
+    # We restorecon /mnt/vendor/persist to set SEPolicy label.
+    restorecon /mnt/vendor/persist
+
+    # Create mcRegistry to store failure record
+    mkdir /mnt/vendor/persist/mcRegistry 0771 system system
+
+    mount ext4 /dev/block/by-name/persist /mnt/vendor/persist
+
+    write /proc/bootprof "MOBICORE: Starting mcDriverDaemon"
+    start mobicore
+
+on post-fs-data
+    # Create /data/vendor/key_provisioning dir and get proper encryption policy installed
+    # Key Installation
+    mkdir /data/vendor/key_provisioning 0771 system system
+
+# just boot in fastboot mode, fastbootd service need vendor.boot-hal-1-0 & health-hal-2-0
+on property:recovery.fastboot_mode=1
+    start vendor.boot-hal-1-2
+    start health-hal-2-0
+
+on property:recovery.service=1 && property:ro.virtual_ab.enabled=true
+    start vendor.boot-hal-1-2
+
+# ported from PD2183: TWRP never sets recovery.service=1 (stock recovery
+# only); trigger the decrypt stack on crypto.ready=1 set by prepdecrypt.sh
+on property:crypto.ready=1
+    start gatekeeper-1-0
+    start keystore2
+    start keymaster-5-0
+    start vold
+
+service vendor.boot-hal-1-2 /vendor/bin/hw/android.hardware.boot@1.2-service
+    android.hardware.boot@1.0::IBootControl default
+    interface android.hardware.boot@1.1::IBootControl default
+    interface android.hardware.boot@1.2::IBootControl default
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
+service keymaster-3-0 /vendor/bin/android.hardware.keymaster@3.0-service
+    disabled
+    user root
+    group root drmrpc
+    seclabel u:r:recovery:s0
+
+service keymaster-4-0 /vendor/bin/android.hardware.keymaster@4.0-service
+    disabled
+    user root
+    group root drmrpc
+    seclabel u:r:recovery:s0
+
+service keymaster-5-0 /vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustonic
+    disabled
+    user root
+    group root drmrpc
+    seclabel u:r:recovery:s0
+
+service gatekeeper-1-0 /vendor/bin/hw/android.hardware.gatekeeper-service.trustonic
+    disabled
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
+service keystore_auth /system/bin/keystore_auth
+    disabled
+    user system
+    group root system
+    seclabel u:r:recovery:s0
+
+service vndservicemanager /vendor/bin/vndservicemanager /dev/vndbinder
+    user root
+    writepid /dev/cpuset/system-background/tasks
+    seclabel u:r:recovery:s0
+
+service keystore2 /system/bin/keystore2 /data/misc/keystore
+    disabled
+    user keystore
+    group keystore readproc log
+    task_profiles ProcessCapacityHigh
+    seclabel u:r:recovery:s0
+
+service vold /system/bin/vold \
+        --blkid_context=u:r:blkid:s0 --blkid_untrusted_context=u:r:blkid_untrusted:s0 \
+        --fsck_context=u:r:fsck:s0 --fsck_untrusted_context=u:r:fsck_untrusted:s0
+    disabled
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
+
+service vendor.boot-hal-1-0 /vendor/bin/hw/android.hardware.boot@1.0-service
+    disabled
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
+service health-hal-2-0 /vendor/bin/hw/android.hardware.health@2.0-service
+    disabled
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
+# Start Daemon (Registry directories should already be present)
+# -r list matches the .drbin TAs actually present in PD2551 vendor.img
+service mobicore /vendor/bin/mcDriverDaemon --P1 /mnt/vendor/persist/mcRegistry \
+	-r /vendor/app/mcRegistry/06090000000000000000000000000000.drbin \
+	-r /vendor/app/mcRegistry/020f0000000000000000000000000000.drbin \
+	-r /vendor/app/mcRegistry/05120000000000000000000000000001.drbin \
+	-r /vendor/app/mcRegistry/05070000000000000000000000000000.drbin \
+	-r /vendor/app/mcRegistry/031c0000000000000000000000000000.drbin \
+	-r /vendor/app/mcRegistry/033c0000000000000000000000000000.drbin \
+	-r /vendor/app/mcRegistry/07150000000000000000000000000000.drbin \
+	-r /vendor/app/mcRegistry/07170000000000000000000000000000.drbin \
+	-r /vendor/app/mcRegistry/07210000000000000000000000000000.drbin \
+	-r /vendor/app/mcRegistry/08050000000000000000000000003419.drbin \
+	-r /vendor/app/mcRegistry/40188311faf343488db888ad39496f9a.drbin \
+	-r /vendor/app/mcRegistry/5020170115e016302017012521300000.drbin
+    seclabel u:r:recovery:s0
+    user root
+    group root
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib:/sbin
+
+# t-Drv naming (PD2551 vendor.img)
+# 020f0000000000000000000000000000.drbin : utils
+# 05120000000000000000000000000001.drbin : sec
+# 05070000000000000000000000000000.drbin : goodix_fp
+# 06090000000000000000000000000000.drbin : drm keyinstall
+# 40188311faf343488db888ad39496f9a.drbin : widevine
+# 5020170115e016302017012521300000.drbin : drm_hdcp_common
+# 08050000000000000000000000003419.drbin : tui/keybox
+# 0715/0717/0721/031c/033c               : platform TAs

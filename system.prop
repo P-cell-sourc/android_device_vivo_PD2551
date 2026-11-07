@@ -1,0 +1,4 @@
+ro.mediatek.platform=mt6899
+ro.vendor.mediatek.platform=mt6899
+ro.hardware=mt6899
+ro.boot.dynamic_partitions=true

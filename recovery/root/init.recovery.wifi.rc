@@ -1,0 +1,97 @@
+################################################################################
+# wuzengshun add for recovery wifi                                             #
+################################################################################
+#for wifi
+
+on init
+    export ANDROID_DNS_MODE local
+
+    mkdir /system/etc
+    mkdir /mnt/vendor/nvdata 0777
+    symlink /system/etc/firmware /etc/firmware
+    #symlink /sbin /system/etc/wifi
+    symlink /vendor /system/vendor
+    symlink /system/bin/toybox /system/bin/insmod
+
+# load wmt_drv
+#on boot
+#    insmod /vendor/lib/modules/wmt_drv.ko
+
+# load wifi chrdev driver and wlan driver after wmt_loader finish
+on property:vendor.connsys.driver.ready=yes
+    insmod /lib/modules/wlan_drv_gen4m_6985_6639.ko
+    mount ext4 /dev/block/by-name/nvdata /mnt/vendor/nvdata
+    start wlan_assistant
+
+service conninfra_loader  /vendor/bin/conninfra_loader
+    disabled
+    oneshot
+    user root
+    seclabel u:r:recovery:s0
+
+service conn_launcher /vendor/bin/conn_launcher -p /vendor/firmware/
+    disabled
+    user root
+    seclabel u:r:recovery:s0
+
+service wlan_assistant /vendor/bin/wlan_assistant
+    disabled
+    user root
+    group root system gps inet
+    seclabel u:r:recovery:s0
+
+service wpa_supplicant /system/bin/wpa_supplicant -Dnl80211 -iwlan0 -dd -O/cache/recovery/sockets -c/cache/recovery/wpa_supplicant.conf
+    disabled
+    user root
+    seclabel u:r:hal_wifi_supplicant_default:s0
+
+service dhcpcd /system/bin/dhcpcd wlan0
+    disabled
+    oneshot
+    user root
+    seclabel u:r:recovery:s0
+
+# bt
+on property:vendor.connsys.driver.ready=yes
+    chown bluetooth bluetooth /dev/ttyS3
+    start uart_launcher
+    chown bluetooth bluetooth /proc/stpbt
+    chown bluetooth bluetooth /proc/stpbt/bt_fw_version
+
+# service for uart_launcher
+service uart_launcher /vendor/bin/uart_launcher -f 1 -p /dev/ttyS3
+    disabled
+    user root
+    group root system
+    seclabel u:r:recovery:s0
+
+#step 1
+on property:survival.start.service=true
+    insmod /lib/modules/conninfra.ko
+    start conninfra_loader
+    start conn_launcher
+
+#step 2
+on property:wmtwifi.power.enable=true
+    write /dev/wmtWifi 1
+
+on property:wmtwifi.power.enable=false
+    write /dev/wmtWifi 0
+
+#step 3
+on property:supplicant.status=running
+    start wpa_supplicant
+
+on property:supplicant.status=stopped
+    stop wpa_supplicant
+
+#step 4
+#on property:dhcpcd.status=running
+#    start dhcpcd
+
+#on property:dhcpcd.status=stopped
+#    stop dhcpcd
+
+#################################################
+#For WLAN function end
+#################################################

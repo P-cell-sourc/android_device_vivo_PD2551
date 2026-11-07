@@ -1,0 +1,53 @@
+on property:vendor.vivo.touch.support.vtsthp0=1
+    write /dev/thp-dev 0
+    chmod 0664 /dev/thp-dev
+    chown system /dev/thp-dev
+
+    chmod 0664 /dev/vts_thp0
+    start vtsthpService0
+
+on property:vendor.vivo.touch.support.vtsthp1=1
+    chmod 0664 /dev/vts_thp1
+    start vtsthpService1
+
+on property:vendor.vivo.touch.support.vtsthp_recovery0=1
+    write /dev/thp-dev 0
+    chmod 0664 /dev/thp-dev
+    chown system /dev/thp-dev
+
+    chmod 0664 /dev/vts_thp0
+    start vtsthpServiceRecovery0
+
+on property:vendor.vivo.touch.support.vtsthp_recovery1=1
+    chmod 0664 /dev/vts_thp1
+    start vtsthpServiceRecovery1
+
+
+service vtsthpService0 /vendor/bin/vtsthp --thp 0
+    class core
+    user root
+    group system
+    disabled
+    seclabel u:r:vts_app:s0
+
+service vtsthpService1 /vendor/bin/vtsthp --thp 1
+    class core
+    user root
+    group system
+    disabled
+    seclabel u:r:vts_app:s0
+
+service vtsthpServiceRecovery0 /vendor/bin/vtsthp --thp 0
+    class core
+    user root
+    group system
+    disabled
+    seclabel u:r:recovery:s0
+
+service vtsthpServiceRecovery1 /vendor/bin/vtsthp --thp 1
+    class core
+    user root
+    group system
+    disabled
+    seclabel u:r:recovery:s0
+
