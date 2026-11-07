@@ -68,8 +68,6 @@ BOARD_MKBOOTIMG_ARGS := \
     --tags_offset 0x07808000 \
     --dtb_offset 0x01f08000
 BOARD_KERNEL_IMAGE_NAME := Image
-TARGET_KERNEL_CONFIG := PD2551_defconfig
-TARGET_KERNEL_SOURCE := kernel/vivo/PD2551
 
 TARGET_FORCE_PREBUILT_KERNEL := true
 ifeq ($(TARGET_FORCE_PREBUILT_KERNEL),true)
@@ -220,7 +218,6 @@ TW_STATUS_ICONS_ALIGN := center
 TW_CUSTOM_CLOCK_POS := 610
 TW_NO_FASTBOOT_BOOT := true
 
-TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/recovery/root/system/etc/recovery.fstab
 TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
 
 # --- Data decryption (single source of truth; do not duplicate in device.mk) ---
