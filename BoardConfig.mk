@@ -78,11 +78,13 @@ BOARD_MKBOOTIMG_ARGS += --dtb $(TARGET_PREBUILT_DTB)
 BOARD_INCLUDE_DTB_IN_BOOTIMG :=
 endif
 
-# GKI (Android 12+, header v4)
-# The recovery ramdisk is packed into vendor_boot on these devices
-BOARD_USES_GENERIC_KERNEL_IMAGE := true
-BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT := true
-BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE := true
+# NOTE: PD2551 uses GKI boot image v4 (recovery ramdisk packed into vendor_boot
+# by the flashing tool), but the TWRP/OrangeFox build itself only produces
+# recovery.img from the prebuilt kernel — the GKI build flags
+# (BOARD_USES_GENERIC_KERNEL_IMAGE / BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT /
+# BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE) are intentionally NOT set because
+# no vendor_boot image is built here.
+
 
 # ==========================================================================
 # 5. Partitions / Filesystem
