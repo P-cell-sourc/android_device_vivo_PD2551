@@ -1,1 +1,124 @@
-
+panel-nt37801-cmd-120hz.ko: rt4831a_drv.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+sec.ko:
+mtk-pmic-keys.ko: vivo_bsp_engine.ko mrdump.ko
+event_track.ko:
+usb_dp_selector.ko: mediatek-drm.ko mcDrvModule-ffa.ko ffa_v11.ko drm_display_helper.ko vfcs-vpsy.ko mdp_drv_dummy.ko mtk_disp_notify.ko drm_dma_helper.ko mtk-afe-external.ko mmqos-common.ko mtk-mmdvfs-debug.ko mtk-mmdvfs-ftrace.ko mtk-mmdvfs.ko mtk_dramc.ko mtk-mminfra-debug.ko mtk-hw-semaphore.ko mtk-mml.ko tinysys-scmi.ko system_heap.ko thp_pool.ko mtk_sync.ko vivo_display.ko event_track.ko mtk_slbc.ko mtk-icc-core.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-cmdq-drv-ext.ko device-apc-common.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko iommu_debug.ko mtk_iommu_util.ko mmprofile.ko aee_aed.ko irq-dbg.ko mux_switch.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+mtk-smi.ko: aee_aed.ko
+device-apc-common.ko: aee_aed.ko
+rpmb-mtk.ko: ufs-mediatek-mod.ko rpmb.ko ufs-mediatek-dbg.ko blocktag.ko mediatek-drm.ko mcDrvModule-ffa.ko ffa_v11.ko drm_display_helper.ko vfcs-vpsy.ko mdp_drv_dummy.ko mtk_disp_notify.ko drm_dma_helper.ko mtk-afe-external.ko mmqos-common.ko mtk-mmdvfs-debug.ko mtk-mmdvfs-ftrace.ko mtk-mmdvfs.ko mtk_dramc.ko mtk-mminfra-debug.ko mtk-hw-semaphore.ko mtk-mml.ko tinysys-scmi.ko system_heap.ko thp_pool.ko mtk_sync.ko vivo_display.ko event_track.ko mtk_slbc.ko mtk-icc-core.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-cmdq-drv-ext.ko device-apc-common.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko iommu_debug.ko mtk_iommu_util.ko mmprofile.ko aee_aed.ko irq-dbg.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+leds-mtk.ko: mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko
+mtu3.ko:
+mmqos-common.ko: mtk-mmdvfs-debug.ko mtk-mmdvfs-ftrace.ko mtk-mmdvfs.ko mtk_dramc.ko mtk-icc-core.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko mmprofile.ko aee_aed.ko mrdump.ko
+reset-ti-syscon.ko:
+pinctrl-mtk-v2.ko:
+smpu-hook-v1.ko: smpu.ko emi-mpu.ko aee_aed.ko
+vcp_status.ko:
+mtk-hw-semaphore.ko: mtk-smi-dbg.ko emi.ko mtk-smi.ko aee_aed.ko
+panel-truly-nt35595-cmd.ko: mtk_panel_ext.ko
+mtk_chg_type_det.ko: tcpc_class.ko pd_dbg_info.ko charger_class.ko
+mtk-socinfo.ko:
+mtk_bp_thl.ko:
+mtk-mminfra-debug.ko: mtk-hw-semaphore.ko tinysys-scmi.ko clk-common.ko mtk-cmdq-drv-ext.ko device-apc-common.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko iommu_debug.ko mtk_iommu_util.ko mmprofile.ko aee_aed.ko irq-dbg.ko mrdump.ko
+mtk-afe-external.ko:
+vfcs-misc-core.ko: vfcs-reserved-block-core.ko vfcs-vpsy.ko vivo_bsp_engine.ko mrdump.ko
+mtk-mmdvfs-v3.ko: clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko aee_aed.ko
+pwm-mtk-disp.ko:
+mtk-mmc-dbg.ko: blocktag.ko pinctrl-mtk-common-v2_debug.ko pinctrl-mtk-v2.ko mrdump.ko
+rtc-mt6685.ko: aee_aed.ko
+mtk-dvfsrc-helper.ko: mtk-dvfsrc.ko mtk-scpsys.ko mtk-mmdvfs-debug.ko mtk-mmdvfs-ftrace.ko mtk-mmdvfs.ko mtk_dramc.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko mmprofile.ko aee_aed.ko mrdump.ko
+vivo_ts.ko: sensors_class.ko mediatek-drm.ko mcDrvModule-ffa.ko ffa_v11.ko drm_display_helper.ko vfcs-vpsy.ko mdp_drv_dummy.ko mtk_disp_notify.ko drm_dma_helper.ko mtk-afe-external.ko mmqos-common.ko mtk-mmdvfs-debug.ko mtk-mmdvfs-ftrace.ko mtk-mmdvfs.ko mtk_dramc.ko mtk-mminfra-debug.ko mtk-hw-semaphore.ko mtk-mml.ko tinysys-scmi.ko system_heap.ko thp_pool.ko mtk_sync.ko vivo_display.ko event_track.ko mtk_slbc.ko mtk-icc-core.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-cmdq-drv-ext.ko device-apc-common.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko iommu_debug.ko mtk_iommu_util.ko mmprofile.ko aee_aed.ko irq-dbg.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+mtk_tinysys_ipi.ko: mtk_rpmsg_mbox.ko mtk-mbox.ko
+thp_pool.ko:
+panel-alpha-jdi-nt36672e-vdo-60hz.ko: rt4831a_drv.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+aw86938.ko: vivo_haptic_core.ko event_track.ko
+panel-alpha-jdi-nt36672e-vdo-120hz-threshold.ko: rt4831a_drv.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+panel-alpha-jdi-nt36672e-vdo-120hz.ko: rt4831a_drv.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+pinctrl-mtk-common-v2_debug.ko: pinctrl-mtk-v2.ko
+mtk_panel_ext.ko:
+extcon-mtk-usb.ko: vfcs-misc-core.ko vfcs-reserved-block-core.ko tcpc_class.ko pd_dbg_info.ko vfcs-vpsy.ko vivo_bsp_engine.ko mrdump.ko
+mmprofile.ko: aee_aed.ko
+emi.ko:
+reboot-mode.ko:
+mux_switch.ko:
+aw86938s.ko: vivo_haptic_core.ko event_track.ko
+mtk-smi-dbg.ko: emi.ko mtk-smi.ko aee_aed.ko
+mtk_slbc.ko:
+vfcs-reserved-block-core.ko:
+pd_dbg_info.ko:
+tinysys-scmi.ko:
+mtk_rpmsg_mbox.ko: mtk-mbox.ko
+rpmb.ko:
+mtk-mbox.ko:
+leds-mtk-disp.ko: mediatek-drm.ko mcDrvModule-ffa.ko ffa_v11.ko drm_display_helper.ko vfcs-vpsy.ko mdp_drv_dummy.ko mtk_disp_notify.ko drm_dma_helper.ko mtk-afe-external.ko mmqos-common.ko mtk-mmdvfs-debug.ko mtk-mmdvfs-ftrace.ko mtk-mmdvfs.ko mtk_dramc.ko mtk-mminfra-debug.ko mtk-hw-semaphore.ko mtk-mml.ko tinysys-scmi.ko system_heap.ko thp_pool.ko mtk_sync.ko vivo_display.ko event_track.ko mtk_slbc.ko mtk-icc-core.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-cmdq-drv-ext.ko device-apc-common.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko iommu_debug.ko mtk_iommu_util.ko mmprofile.ko aee_aed.ko irq-dbg.ko rt4831a_drv.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+vfcs-fuelsummary.ko: vfcs-vpsy.ko vivo_bsp_engine.ko mrdump.ko
+vivo_display.ko: event_track.ko
+iommu_debug.ko: mtk_iommu_util.ko aee_aed.ko mrdump.ko
+mtk_charger_framework.ko: adapter_class.ko mtk_charger_algorithm_class.ko charger_class.ko
+vivo_bsp_engine.ko: mrdump.ko
+mtk_wdt.ko:
+adapter_class.ko:
+mtk-mmdebug-vcp.ko: mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko aee_aed.ko
+sensors_class.ko:
+syscon-reboot-mode.ko: reboot-mode.ko
+vkyber-iosched.ko: symphony.ko vivo_rsc.ko
+mtk_charger_algorithm_class.ko:
+vivo_rsc.ko:
+aee_aed.ko:
+mtk-uart-apdma.ko:
+mcDrvModule-ffa.ko: ffa_v11.ko
+xhci-mtk-hcd-v2.ko:
+vklp.ko:
+mediatek-drm.ko: mcDrvModule-ffa.ko ffa_v11.ko drm_display_helper.ko vfcs-vpsy.ko mdp_drv_dummy.ko mtk_disp_notify.ko drm_dma_helper.ko mtk-afe-external.ko mmqos-common.ko mtk-mmdvfs-debug.ko mtk-mmdvfs-ftrace.ko mtk-mmdvfs.ko mtk_dramc.ko mtk-mminfra-debug.ko mtk-hw-semaphore.ko mtk-mml.ko tinysys-scmi.ko system_heap.ko thp_pool.ko mtk_sync.ko vivo_display.ko event_track.ko mtk_slbc.ko mtk-icc-core.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-cmdq-drv-ext.ko device-apc-common.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko iommu_debug.ko mtk_iommu_util.ko mmprofile.ko aee_aed.ko irq-dbg.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+charger_class.ko:
+phy-mtk-ufs.ko:
+panel_virtual.ko: vivo_display.ko event_track.ko mtk_panel_ext.ko
+panel-truly-td4330-cmd.ko: rt4831a_drv.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+panel_common.ko: mediatek-drm.ko mcDrvModule-ffa.ko ffa_v11.ko drm_display_helper.ko vfcs-vpsy.ko mdp_drv_dummy.ko mtk_disp_notify.ko drm_dma_helper.ko mtk-afe-external.ko mmqos-common.ko mtk-mmdvfs-debug.ko mtk-mmdvfs-ftrace.ko mtk-mmdvfs.ko mtk_dramc.ko mtk-mminfra-debug.ko mtk-hw-semaphore.ko mtk-mml.ko tinysys-scmi.ko system_heap.ko thp_pool.ko mtk_sync.ko vivo_display.ko event_track.ko mtk_slbc.ko mtk-icc-core.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-cmdq-drv-ext.ko device-apc-common.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko iommu_debug.ko mtk_iommu_util.ko mmprofile.ko aee_aed.ko irq-dbg.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+tcpc_mt6375.ko: tcpc_class.ko pd_dbg_info.ko
+panel-alpha-jdi-nt36672e-cphy-vdo.ko: mtk_panel_ext.ko
+symphony.ko: vivo_rsc.ko
+regulator-vibrator.ko:
+mtk-icc-core.ko:
+smpu.ko: emi-mpu.ko aee_aed.ko
+nvmem_mtk-devinfo.ko:
+ffa_v11.ko:
+leds-mtk-pwm.ko: mediatek-drm.ko mcDrvModule-ffa.ko ffa_v11.ko drm_display_helper.ko vfcs-vpsy.ko mdp_drv_dummy.ko mtk_disp_notify.ko drm_dma_helper.ko mtk-afe-external.ko mmqos-common.ko mtk-mmdvfs-debug.ko mtk-mmdvfs-ftrace.ko mtk-mmdvfs.ko mtk_dramc.ko mtk-mminfra-debug.ko mtk-hw-semaphore.ko mtk-mml.ko tinysys-scmi.ko system_heap.ko thp_pool.ko mtk_sync.ko vivo_display.ko event_track.ko mtk_slbc.ko mtk-icc-core.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-cmdq-drv-ext.ko device-apc-common.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko iommu_debug.ko mtk_iommu_util.ko mmprofile.ko aee_aed.ko irq-dbg.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+tcpc_class.ko: pd_dbg_info.ko
+vfcs-vpsy.ko: vivo_bsp_engine.ko mrdump.ko
+mtk-dvfsrc.ko: mtk-scpsys.ko clk-common.ko aee_aed.ko
+clk-common.ko: aee_aed.ko
+ufs-mediatek-mod.ko: rpmb.ko ufs-mediatek-dbg.ko blocktag.ko mediatek-drm.ko mcDrvModule-ffa.ko ffa_v11.ko drm_display_helper.ko vfcs-vpsy.ko mdp_drv_dummy.ko mtk_disp_notify.ko drm_dma_helper.ko mtk-afe-external.ko mmqos-common.ko mtk-mmdvfs-debug.ko mtk-mmdvfs-ftrace.ko mtk-mmdvfs.ko mtk_dramc.ko mtk-mminfra-debug.ko mtk-hw-semaphore.ko mtk-mml.ko tinysys-scmi.ko system_heap.ko thp_pool.ko mtk_sync.ko vivo_display.ko event_track.ko mtk_slbc.ko mtk-icc-core.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-cmdq-drv-ext.ko device-apc-common.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko iommu_debug.ko mtk_iommu_util.ko mmprofile.ko aee_aed.ko irq-dbg.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+mtk-scpsys.ko: clk-common.ko aee_aed.ko
+ufs-mediatek-dbg.ko: aee_aed.ko irq-dbg.ko mrdump.ko
+usb_meta.ko: bootprof.ko
+emi-mpu.ko: aee_aed.ko
+sec-rng.ko:
+mtk_pd_adapter.ko: adapter_class.ko tcpc_class.ko pd_dbg_info.ko
+mt6375-charger.ko: vfcs-chg.ko tcpc_mt6375.ko vfcs-fuelsummary.ko vfcs-misc-core.ko vfcs-reserved-block-core.ko tcpc_class.ko pd_dbg_info.ko charger_class.ko vfcs-vpsy.ko vivo_bsp_engine.ko mrdump.ko
+system_heap.ko: thp_pool.ko
+usb_boost.ko: mtk-dvfsrc-helper.ko mtk-dvfsrc.ko mtk-scpsys.ko mtu3.ko xhci-mtk-hcd-v2.ko mtk-mmdvfs-debug.ko mtk-mmdvfs-ftrace.ko mtk-mmdvfs.ko mtk_dramc.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko mmprofile.ko aee_aed.ko mrdump.ko
+vivo_haptic_core.ko: event_track.ko
+irq-dbg.ko:
+8250_mtk.ko: mtk-uart-apdma.ko
+drm_dma_helper.ko:
+rt4831a_drv.ko: leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko
+mtk-mmc.ko: cqhci.ko rpmb-mtk.ko ufs-mediatek-mod.ko rpmb.ko ufs-mediatek-dbg.ko mtk-mmc-dbg.ko blocktag.ko pinctrl-mtk-common-v2_debug.ko pinctrl-mtk-v2.ko mediatek-drm.ko mcDrvModule-ffa.ko ffa_v11.ko drm_display_helper.ko vfcs-vpsy.ko mdp_drv_dummy.ko mtk_disp_notify.ko drm_dma_helper.ko mtk-afe-external.ko mmqos-common.ko mtk-mmdvfs-debug.ko mtk-mmdvfs-ftrace.ko mtk-mmdvfs.ko mtk_dramc.ko mtk-mminfra-debug.ko mtk-hw-semaphore.ko mtk-mml.ko tinysys-scmi.ko system_heap.ko thp_pool.ko mtk_sync.ko vivo_display.ko event_track.ko mtk_slbc.ko mtk-icc-core.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-cmdq-drv-ext.ko device-apc-common.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko iommu_debug.ko mtk_iommu_util.ko mmprofile.ko aee_aed.ko irq-dbg.ko leds-mtk.ko mtk_bp_thl.ko vivo_bsp_engine.ko mrdump.ko mtk_panel_ext.ko
+mtk_disp_notify.ko:
+mtk_iommu_util.ko:
+rt_pd_manager.ko: tcpc_class.ko pd_dbg_info.ko
+mtk-cmdq-drv-ext.ko: device-apc-common.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko iommu_debug.ko mtk_iommu_util.ko mmprofile.ko aee_aed.ko irq-dbg.ko mrdump.ko
+cqhci.ko: blocktag.ko mrdump.ko
+tcpci_late_sync.ko: tcpc_class.ko pd_dbg_info.ko
+mtk-mmdvfs.ko: mtk-smi-dbg.ko emi.ko mtk-smi.ko mmprofile.ko aee_aed.ko
+mtk-mml.ko: tinysys-scmi.ko system_heap.ko thp_pool.ko mtk_sync.ko vivo_display.ko event_track.ko mtk_slbc.ko mtk-icc-core.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-cmdq-drv-ext.ko device-apc-common.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko iommu_debug.ko mtk_iommu_util.ko mmprofile.ko aee_aed.ko irq-dbg.ko mrdump.ko
+vblmc.ko:
+mtk_sync.ko:
+bootprof.ko:
+mtk_dramc.ko:
+mtk-mmdvfs-debug.ko: mtk-mmdvfs-ftrace.ko mtk-mmdvfs.ko mtk-mmdvfs-v3.ko clk-common.ko mtk-mmdebug-vcp.ko mtk_tinysys_ipi.ko mtk_rpmsg_mbox.ko mtk-mbox.ko mtk-smi-dbg.ko emi.ko mtk-smi.ko vcp_status.ko mmprofile.ko aee_aed.ko mrdump.ko
+mrdump.ko:
+blocktag.ko: mrdump.ko
+vfcs-chg.ko: tcpc_mt6375.ko vfcs-fuelsummary.ko vfcs-misc-core.ko vfcs-reserved-block-core.ko tcpc_class.ko pd_dbg_info.ko vfcs-vpsy.ko vivo_bsp_engine.ko mrdump.ko
+mdp_drv_dummy.ko:
+drm_display_helper.ko:
+mtk-mmdvfs-ftrace.ko:

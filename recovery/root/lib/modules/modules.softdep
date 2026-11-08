@@ -1,1 +1,6 @@
-
+# Soft dependencies extracted from modules themselves.
+softdep mtk_afe_external post: mediatek-drm
+softdep vklp pre: mrdump
+softdep mtk_dvfsrc post: mtk-dvfsrc-regulator
+softdep mtk_dvfsrc post: mtk-dvfsrc-devfreq
+softdep mtk_dvfsrc post: mtk-emi
