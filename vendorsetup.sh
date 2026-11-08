@@ -5,6 +5,5 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-add_lunch_combo omni_PD2551-user
-add_lunch_combo omni_PD2551-userdebug
-add_lunch_combo omni_PD2551-eng
+# Lunch targets are registered via COMMON_LUNCH_CHOICES in AndroidProducts.mk
+# (add_lunch_combo is obsolete and prints warnings in modern builds).
