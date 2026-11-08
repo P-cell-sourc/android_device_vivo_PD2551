@@ -78,12 +78,13 @@ BOARD_MKBOOTIMG_ARGS += --dtb $(TARGET_PREBUILT_DTB)
 BOARD_INCLUDE_DTB_IN_BOOTIMG :=
 endif
 
-# NOTE: PD2551 uses GKI boot image v4 (recovery ramdisk packed into vendor_boot
-# by the flashing tool), but the TWRP/OrangeFox build itself only produces
-# recovery.img from the prebuilt kernel — the GKI build flags
-# (BOARD_USES_GENERIC_KERNEL_IMAGE / BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT /
-# BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE) are intentionally NOT set because
-# no vendor_boot image is built here.
+# GKI / vendor_boot (align PD2415 virtual A/B layout):
+# recovery ramdisk is packed into vendor_boot, no standalone recovery.img.
+TARGET_NO_RECOVERY := true
+BOARD_USES_GENERIC_KERNEL_IMAGE := true
+BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT := true
+BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE :=
+BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 134217728
 
 
 # ==========================================================================
