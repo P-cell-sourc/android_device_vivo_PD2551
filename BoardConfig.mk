@@ -49,6 +49,8 @@ TARGET_NO_BOOTLOADER := true
 # ==========================================================================
 
 BOARD_BOOTIMG_HEADER_VERSION := 4
+# Build-system variable (AOSP 14 board_config.mk derives BUILDING_VENDOR_BOOT_IMAGE from it)
+BOARD_BOOT_HEADER_VERSION := 4
 BOARD_KERNEL_BASE := 0x40000000
 BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2 erofs.reserved_pages=256 product.version=PD2551_A_16.0.15.3.W10 fingerprint.abbr=15/AP3A.240905.015.A2 region_ver=W10 product.solution=MTK
 BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
