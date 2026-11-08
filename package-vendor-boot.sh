@@ -13,6 +13,13 @@
 #
 # 被 OrangeFox CI 的 "Package vendor_boot image" 步骤调用; 也被
 # check-boot-offsets.sh 读取 PARTITION_SIZE 做尺寸一致性校验。
+
+# CI 用 `sh` 调起本脚本 (dash), dash 不支持 pipefail/bash 扩展;
+# 若不在 bash 下运行则自动重_exec 为 bash。
+if [ -z "$BASH_VERSION" ]; then
+  exec bash "$0" "$@"
+fi
+
 set -euo pipefail
 
 TOP="${1:?usage: package-vendor-boot.sh <ORANGEFOX_TOP> <output_image>}"
