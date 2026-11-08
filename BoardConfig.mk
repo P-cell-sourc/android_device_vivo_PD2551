@@ -166,7 +166,7 @@ AB_OTA_PARTITIONS += \
     product \
     boot \
     vbmeta_system
-BOARD_USES_RECOVERY_AS_BOOT := true
+BOARD_USES_RECOVERY_AS_BOOT :=
 
 # ==========================================================================
 # 8. Display / Recovery UI
