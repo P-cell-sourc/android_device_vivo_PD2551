@@ -23,7 +23,7 @@ BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 # ==========================================================================
 
 TARGET_ARCH := arm64
-TARGET_ARCH_VARIANT := armv8-a
+TARGET_ARCH_VARIANT := armv8-2a
 TARGET_CPU_ABI := arm64-v8a
 TARGET_CPU_ABI2 :=
 TARGET_CPU_VARIANT := generic
@@ -31,7 +31,7 @@ TARGET_CPU_VARIANT_RUNTIME := cortex-a55
 
 # Second arch (32-bit userspace needed by some vendor tools)
 TARGET_2ND_ARCH := arm
-TARGET_2ND_ARCH_VARIANT := armv8-a
+TARGET_2ND_ARCH_VARIANT := armv8-2a
 TARGET_2ND_CPU_ABI := armeabi-v7a
 TARGET_2ND_CPU_ABI2 := armeabi
 TARGET_2ND_CPU_VARIANT := generic
@@ -54,6 +54,8 @@ BOARD_BOOT_HEADER_VERSION := 4
 BOARD_KERNEL_BASE := 0x40000000
 BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2 erofs.reserved_pages=256 product.version=PD2551_A_16.0.15.3.W10 fingerprint.abbr=15/AP3A.240905.015.A2 region_ver=W10 product.solution=MTK
 BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
+# GKI: vendor_boot 使用独立的 vendor_cmdline，必须显式继承，否则 permissive 不会生效
+BOARD_VENDOR_CMDLINE := $(BOARD_KERNEL_CMDLINE) loglevel=8 ignore_loglevel
 BOARD_KERNEL_PAGESIZE := 4096
 BOARD_KERNEL_OFFSET := 0x00008000
 BOARD_RAMDISK_OFFSET := 0x07c08000
@@ -95,7 +97,6 @@ BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 134217728
 
 BOARD_FLASH_BLOCK_SIZE := 262144 # (BOARD_KERNEL_PAGESIZE * 64)
 BOARD_BOOTIMAGE_PARTITION_SIZE := 134217728
-BOARD_RECOVERYIMAGE_PARTITION_SIZE := 134217728
 BOARD_HAS_LARGE_FILESYSTEM := true
 BOARD_SUPER_PARTITION_SIZE := 9126805504 # TODO: Fix hardcoded value
 BOARD_SUPER_PARTITION_GROUPS := vivo_dynamic_partitions
@@ -168,7 +169,6 @@ AB_OTA_PARTITIONS += \
     product \
     boot \
     vbmeta_system
-BOARD_USES_RECOVERY_AS_BOOT :=
 
 # ==========================================================================
 # 8. Display / Recovery UI
@@ -176,7 +176,7 @@ BOARD_USES_RECOVERY_AS_BOOT :=
 
 TARGET_SCREEN_DENSITY := 560
 TARGET_USES_VULKAN := true
-TARGET_RECOVERY_PIXEL_FORMAT := BGRA_8888
+TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 
 # APEX
 DEXPREOPT_GENERATE_APEX_IMAGE := true
@@ -188,7 +188,7 @@ DEXPREOPT_GENERATE_APEX_IMAGE := true
 TW_THEME := portrait_hdpi
 TW_EXTRA_LANGUAGES := true
 TW_DEFAULT_LANGUAGE := zh_CN
-TW_SCREEN_BLANK_ON_BOOT := true
+# TW_SCREEN_BLANK_ON_BOOT := true   # 新 panel 上关屏后写回亮度常失效，表现为卡 logo
 TW_INPUT_BLACKLIST := "hbtp_vm"
 TW_USE_TOOLBOX := true
 TW_DEVICE_VERSION := vivo V2551A-OS6-PD2551
@@ -224,6 +224,13 @@ TW_CUSTOM_CLOCK_POS := 610
 TW_NO_FASTBOOT_BOOT := true
 
 TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
+
+# 注意：recovery 模块统一放在 recovery/root/lib/modules/，由 recovery rootfs 整体打包，
+# 不要再通过 BOARD_VENDOR_RAMDISK_KERNEL_MODULES 注册，否则会在 ramdisk 里出现两份，
+# 且第二份的 modules.load 会覆盖 modules.load.recovery。
+# 若改用 AOSP 原生方式，则把上面目录里的 .ko 挪到 prebuilt/ 并启用：
+# BOARD_VENDOR_RAMDISK_KERNEL_MODULES := $(wildcard $(DEVICE_PATH)/prebuilt/recovery_modules/*.ko)
+# BOARD_VENDOR_RAMDISK_KERNEL_MODULES_LOAD := $(DEVICE_PATH)/prebuilt/recovery_modules/essential_modules.txt
 
 # --- Data decryption (single source of truth; do not duplicate in device.mk) ---
 
