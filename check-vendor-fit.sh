@@ -11,12 +11,17 @@ FAIL=0
 
 hr() { printf '%.0s-' {1..64}; echo; }
 
-hr; echo "[1] 内核版本"; hr
+# GKI: 只比较 KMI (如 6.6.89-android15-8), 忽略 -g<hash> 及后缀。
+# kernel 的 -g<hash>-abogki<id> 与 vendor 模块的 -g<hash> 天生不同, 属正常。
+kmi_of() { printf '%s' "$1" | sed -E 's/-g[0-9a-f]{6,}.*$//'; }
+
+hr; echo "[1] 内核版本 / KMI"; hr
 KREL=""
 if [ -f "$PRE/kernel" ]; then
   KREL="$(strings "$PRE/kernel" | grep -m1 -oE '[0-9]+\.[0-9]+\.[0-9]+-[^ ]*' )"
   echo "kernel file : $PRE/kernel ($(du -h "$PRE/kernel" | cut -f1))"
   echo "UTS_RELEASE : ${KREL:-<未找到>}"
+  echo "KMI         : $(kmi_of "$KREL")"
 else
   echo "!! 缺少 $PRE/kernel"; FAIL=1
 fi
@@ -34,26 +39,25 @@ if [ -d "$MODDIR" ]; then
   done
   echo "模块总数: $(ls "$MODDIR"/*.ko 2>/dev/null | wc -l)"
 
-  # 与内核比对
+  # 与内核比对: 只比 KMI
   if [ -n "$KREL" ]; then
-    MISMATCH=0
+    KMOD="$(kmi_of "$KREL")"
+    BAD=0; BADV=""
     for v in "${!VM[@]}"; do
-      case "$v" in
-        "$KREL"*) ;;
-        *) MISMATCH=$((MISMATCH + VM[$v])) ;;
-      esac
+      if [ "$(kmi_of "$v")" != "$KMOD" ]; then BAD=$((BAD + VM[$v])); BADV="$BADV
+                   $v"; fi
     done
-    if [ "$MISMATCH" -gt 0 ]; then
-      echo
-      echo "!! 有 $MISMATCH 个模块的 vermagic 与内核不一致（两次不同构建）"
-      echo "   内核: $KREL"
-      echo "   模块: ${!VM[@]}"
-      echo "   => CONFIG_MODVERSIONS 下版本前缀本身不参与比较, 但不同构建的"
-      echo "      私有符号 CRC 通常对不上, 会报 'disagrees about version of symbol'."
-      echo "      仍需 dmesg 确认; 最稳妥是用同一份 OTA 同时提取 kernel 与 .ko"
+    echo
+    if [ "$BAD" -gt 0 ]; then
+      echo "!! $BAD 个模块的 KMI 与内核不一致:"
+      echo "   内核 KMI: $KMOD"
+      echo "   模块 KMI:$BADV"
+      echo "   => 内核大版本/KMI 不同, 模块必然 invalid module format, 需从同一份 OTA 重取"
       FAIL=1
     else
-      echo "OK: 所有模块 vermagic 与内核匹配"
+      echo "OK  KMI 一致: $KMOD"
+      echo "    注: kernel 的 -g<hash>-abogki<id> 与 vendor 模块的 -g<hash> 不同是 GKI 的正常状态,"
+      echo "        不参与加载匹配; 实际兼容由 KMI + 符号 CRC 决定, 最终以 dmesg 为准。"
     fi
   fi
 else

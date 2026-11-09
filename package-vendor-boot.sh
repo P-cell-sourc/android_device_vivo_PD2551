@@ -147,6 +147,23 @@ for blob in "${SORTED[@]}"; do
 done
 echo "package-vendor-boot: 共 ${#FRAGS[@]} 个 fragment (1 platform + $((idx-1)) recovery)"
 
+# ---------- 2.5 fragment type (对齐原厂 vendor_ramdisk_table) ----------
+# 原厂 PD2551 的 vendor_boot 是 RECOVERY + DLKM 两个 fragment, 没有 PLATFORM。
+# 我们自己组合成 "PLATFORM(first_stage) + RECOVERY(TWRP rootfs)":
+#   - 第一个必须是 platform, first-stage init 靠它拿 /first_stage_ramdisk/fstab.mt6899
+#   - 其余必须是 recovery, 否则 normal boot 也会加载 TWRP 的 /init, 直接顶掉 Android
+FRAG_TYPE_ARGS=()
+if grep -q -- "--ramdisk_type" "$MKBOOTIMG" 2>/dev/null; then
+  TYPES=(platform)
+  i=2
+  while [ "$i" -le "${#FRAGS[@]}" ]; do TYPES+=(recovery); i=$((i+1)); done
+  FRAG_TYPE_ARGS=(--ramdisk_type "${TYPES[@]}")
+  echo "package-vendor-boot: fragment types = ${TYPES[*]}"
+else
+  echo "package-vendor-boot: ::warning:: 该 mkbootimg 不支持 --ramdisk_type, 全部按 platform 打包" >&2
+  echo "package-vendor-boot: ::warning:: 注意这会导致 normal boot 也加载 recovery rootfs" >&2
+fi
+
 # ---------- 3. 读回 vendor_cmdline ----------
 VENDOR_CMDLINE="$(python3 "$UNPACK_BOOTIMG" --boot_img "$BUILT_IMG" --format=mkbootimg 2>/dev/null \
                   | sed -n 's/^ *--vendor_cmdline *//p' | head -1 | sed 's/^"//; s/"$//')"
@@ -182,6 +199,7 @@ python3 "$MKBOOTIMG" \
   --header_version 4 \
   --pagesize 4096 \
   --vendor_ramdisk "${FRAGS[@]}" \
+  "${FRAG_TYPE_ARGS[@]+"${FRAG_TYPE_ARGS[@]}"}" \
   --dtb "$DTB" \
   --vendor_cmdline "$VENDOR_CMDLINE" \
   --base 0x40000000 \
