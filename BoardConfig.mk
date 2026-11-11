@@ -52,7 +52,8 @@ BOARD_BOOTIMG_HEADER_VERSION := 4
 # Build-system variable (AOSP 14 board_config.mk derives BUILDING_VENDOR_BOOT_IMAGE from it)
 BOARD_BOOT_HEADER_VERSION := 4
 BOARD_KERNEL_BASE := 0x40000000
-BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2 erofs.reserved_pages=256 product.version=PD2551_A_16.0.15.3.W10 fingerprint.abbr=15/AP3A.240905.015.A2 region_ver=W10 product.solution=MTK
+# cmdline 版本串对齐官方 OTA PD2551_A_16.0.17.1.W10 (2026-10-22 包)
+BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2 erofs.reserved_pages=256 product.version=PD2551_A_16.0.17.1.W10 fingerprint.abbr=15/AP3A.240905.015.A2 region_ver=W10 product.solution=MTK
 BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
 # GKI: vendor_boot 使用独立的 vendor_cmdline，必须显式继承，否则 permissive 不会生效
 BOARD_VENDOR_CMDLINE := $(BOARD_KERNEL_CMDLINE) loglevel=8 ignore_loglevel
@@ -96,12 +97,15 @@ BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 134217728
 # ==========================================================================
 
 BOARD_FLASH_BLOCK_SIZE := 262144 # (BOARD_KERNEL_PAGESIZE * 64)
-BOARD_BOOTIMAGE_PARTITION_SIZE := 134217728
+# boot 分区实际 96MB (OTA manifest: 100663296), 旧值 128MB 会导致 fastboot flash boot 失败
+BOARD_BOOTIMAGE_PARTITION_SIZE := 100663296
 BOARD_HAS_LARGE_FILESYSTEM := true
-BOARD_SUPER_PARTITION_SIZE := 9126805504 # TODO: Fix hardcoded value
+# super 分区组 (OTA manifest: group main = 15567159296, super = group + 4MB metadata)
+BOARD_SUPER_PARTITION_SIZE := 15571353600
 BOARD_SUPER_PARTITION_GROUPS := vivo_dynamic_partitions
-BOARD_VIVO_DYNAMIC_PARTITIONS_PARTITION_LIST := system system system_ext system_ext vendor vendor product product odm odm vendor_dlkm vendor_dlkm odm_dlkm odm_dlkm system_dlkm system_dlkm cust vgc
-BOARD_VIVO_DYNAMIC_PARTITIONS_SIZE := 9122611200 # TODO: Fix hardcoded value
+# 新 OTA 的动态分区组不含 cust/vgc (它们由 oem_zip 单独刷入)
+BOARD_VIVO_DYNAMIC_PARTITIONS_PARTITION_LIST := system system_ext vendor vendor product odm odm_dlkm vendor_dlkm system_dlkm
+BOARD_VIVO_DYNAMIC_PARTITIONS_SIZE := 15567159296
 
 # Filesystem: stock dynamic partitions are EROFS (matches official payload)
 TARGET_COPY_OUT_VENDOR := vendor

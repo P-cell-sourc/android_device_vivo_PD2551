@@ -39,7 +39,7 @@ PACKER="$DEV_DIR/vendor_boot_v4.py"
 PARTITION_SIZE=134217728
 
 # 兜底 cmdline (仅在构建产物 header 里读不到时使用)
-FALLBACK_CMDLINE="bootopt=64S3,32N2,64N2 erofs.reserved_pages=256 product.version=PD2551_A_16.0.15.3.W10 fingerprint.abbr=15/AP3A.240905.015.A2 region_ver=W10 product.solution=MTK"
+FALLBACK_CMDLINE="bootopt=64S3,32N2,64N2 erofs.reserved_pages=256 product.version=PD2551_A_16.0.17.1.W10 fingerprint.abbr=15/AP3A.240905.015.A2 region_ver=W10 product.solution=MTK"
 
 for f in "$BUILT_IMG" "$PACKER"; do
   [ -f "$f" ] || { echo "package-vendor-boot: 缺少 $f" >&2; exit 1; }

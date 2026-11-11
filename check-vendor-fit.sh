@@ -18,7 +18,8 @@ kmi_of() { printf '%s' "$1" | sed -E 's/-g[0-9a-f]{6,}.*$//'; }
 hr; echo "[1] 内核版本 / KMI"; hr
 KREL=""
 if [ -f "$PRE/kernel" ]; then
-  KREL="$(strings "$PRE/kernel" | grep -m1 -oE '[0-9]+\.[0-9]+\.[0-9]+-[^ ]*' )"
+  # 只认带 android KMI 的版本串 (新 GKI 内核里有裸版本号串, 宽匹配会误报)
+  KREL="$(strings "$PRE/kernel" | grep -m1 -oE '[0-9]+\.[0-9]+\.[0-9]+-android[0-9]+-[0-9]+(-g[0-9a-f]+)?[^ ]*' )"
   echo "kernel file : $PRE/kernel ($(du -h "$PRE/kernel" | cut -f1))"
   echo "UTS_RELEASE : ${KREL:-<未找到>}"
   echo "KMI         : $(kmi_of "$KREL")"
