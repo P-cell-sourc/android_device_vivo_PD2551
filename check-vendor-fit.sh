@@ -91,25 +91,44 @@ done
 hr; echo "[5] vendor_cmdline 关键参数"; hr
 S="$DEV/package-vendor-boot.sh"
 B2="$DEV/BoardConfig.mk"
+PACKER="$DEV/vendor_boot_v4.py"
 if [ -f "$S" ]; then
-  LINE="$(grep -m1 '^VENDOR_CMDLINE=' "$S" || true)"
-  if echo "$LINE" | grep -q 'UNPACK_BOOTIMG'; then
-    echo "OK  cmdline 从构建产物动态读回（推荐方式）"
-    if [ -f "$B2" ] && grep -qE '^BOARD_VENDOR_CMDLINE' "$B2"; then
-      echo "OK  已定义 BOARD_VENDOR_CMDLINE"
+  if grep -q 'vendor_boot_v4.py' "$S"; then
+    echo "OK  使用自带 v4 打包器 (不依赖树内 mkbootimg 的多片段支持)"
+    [ -f "$PACKER" ] && echo "OK  存在 $PACKER" || { echo "!!  缺少 $PACKER"; FAIL=1; }
+    if grep -q 'androidboot.selinux=permissive' "$S"; then
+      echo "OK  打包时注入 androidboot.selinux=permissive"
     else
-      echo "!!  BoardConfig 未定义 BOARD_VENDOR_CMDLINE"; FAIL=1
+      echo "!!  打包时未注入 androidboot.selinux=permissive"; FAIL=1
     fi
-    if [ -f "$B2" ] && grep -qE '^BOARD_KERNEL_CMDLINE.*androidboot.selinux=permissive' "$B2"; then
-      echo "OK  BOARD_KERNEL_CMDLINE 含 androidboot.selinux=permissive"
+    if grep -q -- '--retag-recovery' "$S"; then
+      echo "OK  强制 recovery 片段类型 (即使构建产物标成 platform)"
     else
-      echo "!!  BOARD_KERNEL_CMDLINE 缺 androidboot.selinux=permissive"; FAIL=1
+      echo "!!  未使用 --retag-recovery, 构建产物可能把 TWRP ramdisk 标成 platform"; FAIL=1
     fi
+    if grep -q 'PVB_ADD_PLATFORM:-0' "$S"; then
+      echo "OK  默认不注入 prebuilt 平台片段 (它是 recovery ramdisk, 不是 first-stage)"
+    else
+      echo "??  平台片段注入逻辑可能已开启, 会破坏原厂 RECOVERY 结构"
+    fi
+  elif grep -q 'UNPACK_BOOTIMG' "$S"; then
+    echo "OK  cmdline 从构建产物动态读回"
   else
-    echo "$LINE"
+    LINE="$(grep -m1 '^VENDOR_CMDLINE=' "$S" || true)"
+    echo "${LINE:-<未找到 cmdline 定义>}"
     for k in androidboot.selinux androidboot.hardware; do
       if echo "$LINE" | grep -q "$k"; then echo "OK  含 $k"; else echo "!!  缺 $k"; FAIL=1; fi
     done
+  fi
+  if [ -f "$B2" ] && grep -qE '^BOARD_VENDOR_CMDLINE' "$B2"; then
+    echo "OK  已定义 BOARD_VENDOR_CMDLINE"
+  else
+    echo "!!  BoardConfig 未定义 BOARD_VENDOR_CMDLINE"; FAIL=1
+  fi
+  if [ -f "$B2" ] && grep -qE '^BOARD_KERNEL_CMDLINE.*androidboot.selinux=permissive' "$B2"; then
+    echo "OK  BOARD_KERNEL_CMDLINE 含 androidboot.selinux=permissive"
+  else
+    echo "!!  BOARD_KERNEL_CMDLINE 缺 androidboot.selinux=permissive"; FAIL=1
   fi
 else
   echo "!! 缺少 $S"; FAIL=1

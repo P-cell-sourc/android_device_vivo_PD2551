@@ -132,16 +132,18 @@ adb shell dmesg | grep -E "version magic|disagrees about|Unknown symbol"
 1. vendor_boot v4 的正确结构是 `vendor_ramdisk_table` **多 fragment**（PLATFORM / RECOVERY / DLKM 三种 type）。合并成一个后 type 恒为 PLATFORM，bootloader 无法按 recovery 模式选取。
 2. 两个 rootfs 路径冲突：平台 ramdisk 有 `bin`/`etc`/`d`/`cache`/`bugreports` 等**符号链接**，TWRP rootfs 里同名条目类型可能不同，cpio 线性解包"后写覆盖先写"，会把文件写进上一段的符号链接目标。
 3. inode 号重复：两段 cpio 各自从 1 开始编号，硬链接关系全乱。
-4. 平台 ramdisk 的 `/first_stage_ramdisk/` 残留。我解包确认：这个目录下只有 **35 个条目**，`first_stage_ramdisk/system/bin/` 里只有 `e2fsck / fsck.f2fs / resize2fs / linker64`，**没有 `init`**。first-stage init 一旦切 root 进去就是死路。
+4. 平台 ramdisk 的 `/first_stage_ramdisk/` 残留。这个目录下只有 **35 个条目**，`first_stage_ramdisk/system/bin/` 里只有 `e2fsck / fsck.f2fs / resize2fs / linker64`，**没有 `init`**。first-stage init 一旦切 root 进去就是死路。
+
+> **更正（2026-11-11）**：上一条说的"35 个条目"取自对 `prebuilt/vendor_ramdisk_platform.cpio.zst` 的一次不完整解析。重新用顺序解析器拆这个文件，实际是 **675 个条目、60,781,568 B**，里面有 `/init`、`init.recovery.{platform,svc,touch,wifi}.rc`、`recovery_resources/`（TWRP 的字体 `HYQiHei-EZS.ttf`、开机动画 `anim_chrysanthemum001.png`）。**它不是 first-stage 平台片段，而是一份 TWRP recovery ramdisk**，只是文件名起错了。所以把它当 `platform` 打包不仅是"没有 init"，而是把整棵 TWRP rootfs 塞进了 normal boot 也会解包的位置。
 
 ### 原厂 vendor_boot 的真实结构（OTA 实测）
 
 把 OTA 的 `vendor_boot`（header v4）拆开后，片段表是这样的：
 
-| # | type | size | 内容 |
-|---|---|---|---|
-| 0 | **RECOVERY** | 47,407,968 | 标准 AOSP recovery ramdisk，984 条目：`first_stage_ramdisk/fstab.mt6899`、`e2fsck`、`fsck.f2fs`、`linker64`、`system/` |
-| 1 | **DLKM** | 53,414,800 | vivo 定制：`init.recovery.{mt6899,platform,svc,touch,wifi}.rc`、`first_stage_ramdisk/fstab.emmc` |
+| # | type | size | 解压后 | 内容 |
+|---|---|---|---|---|
+| 0 | **RECOVERY** | 47,407,968 | 125,025,536 B / 984 条目 | `first_stage_ramdisk/fstab.mt6899`、`e2fsck`、`fsck.f2fs`、`linker64`、`recovery_resources/`、`system/` |
+| 1 | **DLKM** | 53,414,800 | 112,857,600 B / 867 条目 | `init.recovery.{mt6899,platform,svc,touch,wifi}.rc`、`first_stage_ramdisk/fstab.emmc` |
 
 `vendor_ramdisk_size = 100,822,768`（两者之和），`dtb = 451,872 B`，`bootconfig = 65 B`。
 
@@ -150,22 +152,46 @@ adb shell dmesg | grep -E "version magic|disagrees about|Unknown symbol"
 - 你仓库 `recovery/root/` 里的 `init.recovery.mt6899.rc`、`init.recovery.touch.rc` 与这个 **DLKM 片段字节完全一致**——它们本来就是从原厂 DLKM 里提出来的；
 - 也就是说这个树的素材是对的，问题只在**重新打包时怎么摆回去**。
 
-### 正确做法
+### 正确做法（v2，2026-11-11 修订）
+
+原方案是 `platform + recovery` 两段。实测后放弃：
+
+- 原厂根本没有 PLATFORM 片段，first-stage 由 `init_boot.img` 提供（它自带 7,171,072 B 的 ramdisk，含 `/init`）；
+- 那个 prebuilt "platform" 文件本身就是 TWRP rootfs，再当 platform 塞进去会造成两份 recovery rootfs。
+
+所以正确做法是**保持原厂结构**，只做两件事：改 cmdline、把构建产物的片段统一标成 `RECOVERY`：
 
 ```bash
-mkbootimg --vendor_boot out.img --header_version 4 \
-  --vendor_ramdisk "$PLATFORM_RD" "$TWRP_RD" \
-  --ramdisk_type platform recovery \
-  --dtb prebuilt/dtb.img \
-  --vendor_cmdline "$(从构建产物读回 + permissive)"
+# 树内 mkbootimg 旧, 不能指定 --ramdisk_type, 用自带打包器
+python3 vendor_boot_v4.py repack \
+  --src   out/target/product/PD2551/vendor_boot.img \
+  --out   vendor_boot_fixed.img \
+  --retag-recovery \
+  --add-cmdline "androidboot.selinux=permissive androidboot.hardware=mt6899 loglevel=8 ignore_loglevel"
 ```
 
 两个要点：
 
-1. **第一个必须是 `platform`**（first-stage 靠它拿 `fstab.mt6899` 挂 `/data`）；
-2. **其余必须是 `recovery`**。如果全打 `platform`，正常开机也会加载 TWRP 的 `/init`，直接顶掉 Android——这是刷 vendor_boot 类移植最容易翻车的地方。
+1. **不要注入 `prebuilt/vendor_ramdisk_platform.cpio.zst`**（脚本默认关闭，需要试验才设 `PVB_ADD_PLATFORM=1`）；
+2. **必须 `--retag-recovery`**：AOSP 的 `mkbootimg.py` 在只给一个 `--vendor_ramdisk` 且未指定类型时，默认类型是 `platform`。原厂是 `RECOVERY`，标错会让 normal boot 也加载 TWRP 的 `/init`——这是刷 vendor_boot 类移植最容易翻车的地方。
 
-脚本已按这个改（先探测 `mkbootimg` 是否支持 `--ramdisk_type`，不支持会显式告警而不是静默降级）。
+### 为什么必须自带打包器（CI 实测报错）
+
+OrangeFox 树里的 `system/tools/mkbootimg/mkbootimg.py` 是旧版：`--vendor_ramdisk` 只接收**一个**参数，也没有 `--ramdisk_type`。第 47 行的报错就是这个：
+
+```
+ValueError: Unrecognized arguments:
+  ['.../frag_01_recovery.cpio.gz', '--ramdisk_type', 'platform', 'recovery']
+```
+
+`vendor_boot_v4.py` 直接按 `bootimg.h` 的 v4 结构写镜像（header 2128B + 页对齐 + ramdisk + dtb + table(108B/项) + bootconfig），只依赖标准库。验证方式是把原厂 `vendor_boot.img` 原样克隆重打：
+
+```
+clone: 2 fragments -> 101,285,953 bytes
+与原厂镜像前 101,285,953 字节逐字节一致
+```
+
+布局算错一个字节这个测试就过不了，所以表偏移、页对齐、bootconfig 位置都是可信的。
 
 ---
 
