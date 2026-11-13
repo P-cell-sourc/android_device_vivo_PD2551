@@ -41,6 +41,14 @@ PARTITION_SIZE=134217728
 # 兜底 cmdline (仅在构建产物 header 里读不到时使用)
 FALLBACK_CMDLINE="bootopt=64S3,32N2,64N2 erofs.reserved_pages=256 product.version=PD2551_A_16.0.17.1.W10 fingerprint.abbr=15/AP3A.240905.015.A2 region_ver=W10 product.solution=MTK"
 
+# 原厂 vendor_boot 基底 (混合模式, 强烈推荐):
+#   TWRP 构建产物里只有 recovery 片段, 直接刷会丢掉原厂 DLKM 片段
+#   (含 first_stage_ramdisk/fstab.emmc), 导致 normal boot 找不到 fstab
+#   -> logo 后无限重启。混合模式 = 原厂 vendor_boot 为基底, 只把 RECOVERY
+#   片段换成 TWRP ramdisk, DLKM 原样保留, normal boot / recovery 两不误。
+#   获取方式: bash fetch_stock_vendor_boot.sh <官方OTA.zip>  (生成 prebuilt/stock_vendor_boot.img)
+STOCK_VENDOR_BOOT="$DEV_DIR/prebuilt/stock_vendor_boot.img"
+
 for f in "$BUILT_IMG" "$PACKER"; do
   [ -f "$f" ] || { echo "package-vendor-boot: 缺少 $f" >&2; exit 1; }
 done
@@ -135,14 +143,41 @@ else
 fi
 
 # ---------- 3. 重打 v4 (自带打包器, 不依赖树内 mkbootimg) ----------
-echo "package-vendor-boot: 重打 vendor_boot v4"
-PACK_ARGS=(
-  --src "$BUILT_IMG"
-  --out "$WORK/vendor_boot.img"
-  --add-cmdline "androidboot.selinux=permissive androidboot.hardware=mt6899 loglevel=8 ignore_loglevel"
-  --retag-recovery
-  "${CMD_ARGS[@]}"
-)
+if [ -f "$STOCK_VENDOR_BOOT" ]; then
+  # ===== 混合模式 (根治 normal boot 无限重启) =====
+  echo "package-vendor-boot: 混合模式, 基底 = $STOCK_VENDOR_BOOT"
+  # 从 TWRP 构建产物里提取 recovery ramdisk (整个 vendor_ramdisk 区域)
+  python3 - "$DEV_DIR" "$BUILT_IMG" "$WORK/twrp_ramdisk.cpio.gz" <<'PYEOF'
+import sys
+sys.path.insert(0, sys.argv[1])
+from vendor_boot_v4 import VendorBoot
+vb = VendorBoot(open(sys.argv[2], 'rb').read())
+open(sys.argv[3], 'wb').write(vb.ramdisk)
+print('TWRP ramdisk: %d bytes' % len(vb.ramdisk))
+PYEOF
+  PACK_ARGS=(
+    --src "$STOCK_VENDOR_BOOT"
+    --out "$WORK/vendor_boot.img"
+    --platform "$WORK/twrp_ramdisk.cpio.gz"
+    --platform-type recovery
+    --drop-type recovery
+    --retag-recovery
+    --add-cmdline "androidboot.selinux=permissive androidboot.hardware=mt6899 loglevel=8 ignore_loglevel"
+    "${CMD_ARGS[@]}"
+  )
+else
+  # ===== 旧模式 (仅 recovery 片段, normal boot 会无限重启, 仅临时引导用) =====
+  echo "package-vendor-boot: ::warning:: 缺少 $STOCK_VENDOR_BOOT"
+  echo "    产出镜像刷入分区后 normal boot 会因缺 DLKM 片段无限重启!"
+  echo "    仅可用于 fastboot boot 临时引导。请先跑: bash fetch_stock_vendor_boot.sh <官方OTA.zip>"
+  PACK_ARGS=(
+    --src "$BUILT_IMG"
+    --out "$WORK/vendor_boot.img"
+    --add-cmdline "androidboot.selinux=permissive androidboot.hardware=mt6899 loglevel=8 ignore_loglevel"
+    --retag-recovery
+    "${CMD_ARGS[@]}"
+  )
+fi
 if [ -n "$PLATFORM_FRAG" ]; then
   PACK_ARGS+=(--platform "$PLATFORM_FRAG" --platform-if-missing)
 fi
@@ -164,6 +199,11 @@ echo "package-vendor-boot: 镜像 ${SZ}B / 分区 ${PARTITION_SIZE}B (余量 $((
 python3 "$PACKER" dump --src "$WORK/vendor_boot.img" | sed 's/^/    /'
 if ! python3 "$PACKER" dump --src "$WORK/vendor_boot.img" | grep -q 'recovery'; then
   echo "package-vendor-boot: ::error:: 重打后的镜像里没有 recovery 片段" >&2
+  exit 1
+fi
+# 混合模式下必须保留原厂 dlkm 片段 (normal boot 的 fstab 来源), 否则会无限重启
+if [ -f "$STOCK_VENDOR_BOOT" ] && ! python3 "$PACKER" dump --src "$WORK/vendor_boot.img" | grep -q 'dlkm'; then
+  echo "package-vendor-boot: ::error:: 混合模式下丢失了 dlkm 片段, normal boot 将无法启动!" >&2
   exit 1
 fi
 

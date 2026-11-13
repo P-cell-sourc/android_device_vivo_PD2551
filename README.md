@@ -23,6 +23,12 @@ mka recoveryimage -j$(nproc)
 > Note: this device uses boot image header v4 (GKI).
 > The generated recovery ramdisk is packed into `vendor_boot`; flash the
 > built `vendor_boot.img` (or use fastboot boot).
+>
+> **IMPORTANT (normal-boot bootloop fix):** TWRP 构建产物只有 recovery 片段，
+> 直接刷入分区会丢掉原厂 DLKM 片段（fstab.emmc 等），normal boot 会无限重启。
+> 构建后请先运行 `bash fetch_stock_vendor_boot.sh <官方OTA.zip>` 生成
+> `prebuilt/stock_vendor_boot.img`，package-vendor-boot.sh 会自动切换到
+> 混合模式（原厂 DLKM 保留 + TWRP 替换 RECOVERY 片段），刷分区/临时引导均安全。
 
 ```
 #
