@@ -146,15 +146,37 @@ fi
 if [ -f "$STOCK_VENDOR_BOOT" ]; then
   # ===== 混合模式 (根治 normal boot 无限重启) =====
   echo "package-vendor-boot: 混合模式, 基底 = $STOCK_VENDOR_BOOT"
-  # 从 TWRP 构建产物里提取 recovery ramdisk (整个 vendor_ramdisk 区域)
+  # 从 TWRP 构建产物里提取 recovery ramdisk。
+  # 不能用 vb.ramdisk (那是 vendor_ramdisk 主区 = platform 片段): 若设备树
+  # 没设 BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT=true, 主区只有 20 字节
+  # 空 gzip, 直接注入会得到一个"没有 rootfs"的镜像 -> init panic -> 无限重启。
+  # 这里改为取**最大的片段**(优先 recovery 类型), 并做尺寸硬校验。
   python3 - "$DEV_DIR" "$BUILT_IMG" "$WORK/twrp_ramdisk.cpio.gz" <<'PYEOF'
 import sys
 sys.path.insert(0, sys.argv[1])
-from vendor_boot_v4 import VendorBoot
+from vendor_boot_v4 import VendorBoot, TYPE_NAMES
 vb = VendorBoot(open(sys.argv[2], 'rb').read())
-open(sys.argv[3], 'wb').write(vb.ramdisk)
-print('TWRP ramdisk: %d bytes' % len(vb.ramdisk))
+cands = [(e['size'], i, e) for i, e in enumerate(vb.entries)]
+if not cands:
+    data, desc = vb.ramdisk, 'vendor_ramdisk 主区'
+else:
+    cands.sort(key=lambda t: (t[2]['type'] == 1, t[0]))  # recovery(type=1) 优先, 再比大小
+    size, idx, e = cands[-1]
+    data = vb.frag_bytes(idx)
+    desc = 'fragment[%d] type=%s name=%r' % (idx, TYPE_NAMES.get(e['type'], e['type']), e['name'])
+open(sys.argv[3], 'wb').write(data)
+sys.stderr.write('TWRP ramdisk 来源: %s, %d bytes\n' % (desc, len(data)))
 PYEOF
+  TWRP_RD_SIZE=$(stat -c %s "$WORK/twrp_ramdisk.cpio.gz")
+  echo "package-vendor-boot: TWRP ramdisk = ${TWRP_RD_SIZE}B"
+  if [ "$TWRP_RD_SIZE" -lt 4194304 ]; then
+    echo "package-vendor-boot: ::error:: TWRP ramdisk 只有 ${TWRP_RD_SIZE}B (正常应 >40MB)" >&2
+    echo "    说明构建产物 vendor_boot 里没有真正的 recovery ramdisk。" >&2
+    echo "    检查 BoardConfig.mk 是否有: BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT := true" >&2
+    echo "    以及构建日志里有没有 'mkbootfs: cannot open directory ... vendor_ramdisk'。" >&2
+    echo "    拒绝产出会无限重启的镜像。" >&2
+    exit 1
+  fi
   PACK_ARGS=(
     --src "$STOCK_VENDOR_BOOT"
     --out "$WORK/vendor_boot.img"
@@ -166,10 +188,16 @@ PYEOF
     "${CMD_ARGS[@]}"
   )
 else
-  # ===== 旧模式 (仅 recovery 片段, normal boot 会无限重启, 仅临时引导用) =====
-  echo "package-vendor-boot: ::warning:: 缺少 $STOCK_VENDOR_BOOT"
-  echo "    产出镜像刷入分区后 normal boot 会因缺 DLKM 片段无限重启!"
-  echo "    仅可用于 fastboot boot 临时引导。请先跑: bash fetch_stock_vendor_boot.sh <官方OTA.zip>"
+  # ===== 无原厂基底: 产出会丢掉 DLKM 片段, normal boot 必挂 =====
+  echo "package-vendor-boot: ::error:: 缺少 $STOCK_VENDOR_BOOT" >&2
+  echo "    没有原厂基底就不可能有 DLKM 片段(normal boot 的 fstab 来源)," >&2
+  echo "    刷入分区后 100% 无限重启。仅 fastboot boot 临时引导可用。" >&2
+  echo "    先执行: bash fetch_stock_vendor_boot.sh <官方OTA.zip>" >&2
+  echo "    确需产出仅临时引导的镜像: PVB_ALLOW_NO_STOCK=1" >&2
+  if [ "${PVB_ALLOW_NO_STOCK:-0}" != "1" ]; then
+    exit 1
+  fi
+  echo "package-vendor-boot: PVB_ALLOW_NO_STOCK=1, 继续产出 (禁止刷入分区)"
   PACK_ARGS=(
     --src "$BUILT_IMG"
     --out "$WORK/vendor_boot.img"
@@ -206,6 +234,18 @@ if [ -f "$STOCK_VENDOR_BOOT" ] && ! python3 "$PACKER" dump --src "$WORK/vendor_b
   echo "package-vendor-boot: ::error:: 混合模式下丢失了 dlkm 片段, normal boot 将无法启动!" >&2
   exit 1
 fi
+# recovery 片段必须有实际内容 (空 ramdisk = 刷入后 init 找不到 /init -> 无限重启)
+python3 - "$DEV_DIR" "$WORK/vendor_boot.img" <<'PYEOF'
+import sys
+sys.path.insert(0, sys.argv[1])
+from vendor_boot_v4 import VendorBoot
+vb = VendorBoot(open(sys.argv[2], 'rb').read())
+rec = [e for e in vb.entries if e['type'] == 1]
+rec_sz = max([e['size'] for e in rec], default=vb.vendor_ramdisk_size)
+print('package-vendor-boot: recovery 片段实际大小 = %d bytes' % rec_sz)
+if rec_sz < 4194304:
+    sys.exit('package-vendor-boot: ::error:: recovery 片段只有 %d 字节, 是空 ramdisk, 拒绝产出' % rec_sz)
+PYEOF
 
 # ---------- 5. AVB ----------
 echo "package-vendor-boot: 追加 AVB hash footer"

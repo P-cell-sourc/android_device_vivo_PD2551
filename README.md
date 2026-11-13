@@ -29,6 +29,13 @@ mka recoveryimage -j$(nproc)
 > 构建后请先运行 `bash fetch_stock_vendor_boot.sh <官方OTA.zip>` 生成
 > `prebuilt/stock_vendor_boot.img`，package-vendor-boot.sh 会自动切换到
 > 混合模式（原厂 DLKM 保留 + TWRP 替换 RECOVERY 片段），刷分区/临时引导均安全。
+>
+> **IMPORTANT (empty vendor ramdisk fix):** 必须保留
+> `BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT := true`。缺这一行时构建系统
+> 会去 mkbootfs 一个从不存在的 `out/target/product/PD2551/vendor_ramdisk` 目录：
+> `mkbootfs: cannot open directory ... No such file or directory`，结果 vendor_boot
+> 里的 ramdisk 只有 20 字节（空 gzip），整镜像仅约 456KB。刷入后内核能起，但
+> init 找不到 `/init` → panic → 无限重启，连 OrangeFox 界面都进不去（Run 19 即此问题）。
 
 ```
 #

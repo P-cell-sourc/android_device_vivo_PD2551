@@ -88,6 +88,15 @@ endif
 TARGET_NO_RECOVERY := true
 BOARD_USES_GENERIC_KERNEL_IMAGE := true
 BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT := true
+# 必须为 true: 让 mkbootimg 把 recovery ramdisk 作为**独立的 recovery 片段**
+# 打进 vendor_boot (原厂结构 [recovery][dlkm])。
+# 缺这一行时 build/make 只会去 mkbootfs 一个从未被创建的
+# out/target/product/PD2551/vendor_ramdisk 目录, 结果是:
+#     mkbootfs: cannot open directory .../vendor_ramdisk: No such file
+#   -> vendor_ramdisk 变成 20 字节的空 gzip -> vendor_boot 里没有任何 rootfs
+#   -> 刷入后内核起、init 找不到 /init -> panic -> 无限重启 (进不了橙狐)
+# 2026-11-13 Run 19 的镜像就是这个原因 (vendor_ramdisk 20B, 整镜像仅 456KB)。
+BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT := true
 BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE :=
 BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 134217728
 
