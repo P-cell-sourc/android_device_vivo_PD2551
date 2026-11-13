@@ -24,6 +24,17 @@ mka recoveryimage -j$(nproc)
 > The generated recovery ramdisk is packed into `vendor_boot`; flash the
 > built `vendor_boot.img` (or use fastboot boot).
 >
+> **IMPORTANT (payload signature check):** `fetch_stock_vendor_boot.sh` 提取原厂
+> vendor_boot 前会先做两级签名校验（默认开启，`VERIFY_PAYLOAD_SIG=0` 可关）：
+> 1. OTA zip 签名链 `CERT.RSA -> CERT.SF -> MANIFEST.MF -> payload.bin`
+>    （vivo otacert 指纹已钉死：`973e2e8c…ca23958`，可用 `PVB_PIN_CERT` 覆盖）
+> 2. payload 内部签名结构（metadata_signature + payload signature；vivo 不内嵌
+>    payload 公钥，拿到其 payload signer 公钥后可用 `PVB_PIN_KEY` + `PVB_SIG_STRICT=1`
+>    启用完整密码学验签）
+>
+> 相关脚本：`verify_ota_zip.py`（zip 签名链）、`verify_payload.py`（payload 签名，
+> 流式验签，9GB 级 payload 不爆内存）。
+>
 > **IMPORTANT (normal-boot bootloop fix):** TWRP 构建产物只有 recovery 片段，
 > 直接刷入分区会丢掉原厂 DLKM 片段（fstab.emmc 等），normal boot 会无限重启。
 > 构建后请先运行 `bash fetch_stock_vendor_boot.sh <官方OTA.zip>` 生成
