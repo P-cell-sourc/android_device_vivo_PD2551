@@ -56,6 +56,26 @@ done
 WORK="$(mktemp -d "$(dirname "$OUT")/pvboot.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 
+# 原厂基底自动获取: prebuilt/ 里没有时从 Release 拉取 (128MB, 免去 CI 下载 8.6GB OTA)
+# 覆盖下载地址: PVB_STOCK_URL=<url>
+STOCK_URL="${PVB_STOCK_URL:-https://github.com/P-cell-sourc/android_device_vivo_PD2551/releases/download/stock-vendor-boot-16.0.17.1/PD2551_stock_vendor_boot_16.0.17.1.W10.img}"
+if [ ! -f "$STOCK_VENDOR_BOOT" ] && command -v curl >/dev/null 2>&1; then
+  echo "package-vendor-boot: prebuilt 无原厂基底, 尝试自动下载"
+  echo "    $STOCK_URL"
+  if curl -fL --retry 2 --connect-timeout 20 --max-time 1800 \
+        -o "$WORK/stock_vendor_boot.img" "$STOCK_URL" 2>/dev/null; then
+    if [ "$(head -c 8 "$WORK/stock_vendor_boot.img" 2>/dev/null)" = "VNDRBOOT" ] \
+       && [ "$(stat -c %s "$WORK/stock_vendor_boot.img")" -ge 100000000 ]; then
+      STOCK_VENDOR_BOOT="$WORK/stock_vendor_boot.img"
+      echo "package-vendor-boot: 原厂基底下载完成 ($(du -h "$STOCK_VENDOR_BOOT" | cut -f1))"
+    else
+      echo "package-vendor-boot: ::warning:: 下载内容不是有效的 vendor_boot, 忽略" >&2
+    fi
+  else
+    echo "package-vendor-boot: ::warning:: 原厂基底下载失败 (网络或地址不可用)" >&2
+  fi
+fi
+
 find_avbtool() {
   local c
   for c in "$TOP/out/soong/host/linux-x86/bin/avbtool" \
