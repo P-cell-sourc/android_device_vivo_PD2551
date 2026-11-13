@@ -42,10 +42,12 @@ PARTITION_SIZE=134217728
 FALLBACK_CMDLINE="bootopt=64S3,32N2,64N2 erofs.reserved_pages=256 product.version=PD2551_A_16.0.17.1.W10 fingerprint.abbr=15/AP3A.240905.015.A2 region_ver=W10 product.solution=MTK"
 
 # 原厂 vendor_boot 基底 (混合模式, 强烈推荐):
-#   TWRP 构建产物里只有 recovery 片段, 直接刷会丢掉原厂 DLKM 片段
-#   (含 first_stage_ramdisk/fstab.emmc), 导致 normal boot 找不到 fstab
+#   TWRP 构建产物里只有 recovery 片段, 直接刷会丢掉原厂 PLATFORM 片段
+#   (含 first_stage_ramdisk/fstab), 导致 normal boot 找不到 fstab
 #   -> logo 后无限重启。混合模式 = 原厂 vendor_boot 为基底, 只把 RECOVERY
-#   片段换成 TWRP ramdisk, DLKM 原样保留, normal boot / recovery 两不误。
+#   片段换成 TWRP ramdisk, PLATFORM 片段原样保留, normal boot / recovery 两不误。
+#   (注: vendor_ramdisk type 官方枚举为 NONE=0/PLATFORM=1/RECOVERY=2/DLKM=3,
+#    原厂镜像结构是 [0] PLATFORM 主区 + [1] RECOVERY 片段, 无独立 DLKM 片段)
 #   获取方式: bash fetch_stock_vendor_boot.sh <官方OTA.zip>  (生成 prebuilt/stock_vendor_boot.img)
 STOCK_VENDOR_BOOT="$DEV_DIR/prebuilt/stock_vendor_boot.img"
 
@@ -167,20 +169,24 @@ if [ -f "$STOCK_VENDOR_BOOT" ]; then
   # ===== 混合模式 (根治 normal boot 无限重启) =====
   echo "package-vendor-boot: 混合模式, 基底 = $STOCK_VENDOR_BOOT"
   # 从 TWRP 构建产物里提取 recovery ramdisk。
-  # 不能用 vb.ramdisk (那是 vendor_ramdisk 主区 = platform 片段): 若设备树
-  # 没设 BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT=true, 主区只有 20 字节
-  # 空 gzip, 直接注入会得到一个"没有 rootfs"的镜像 -> init panic -> 无限重启。
-  # 这里改为取**最大的片段**(优先 recovery 类型), 并做尺寸硬校验。
+  # 构建产物典型结构 (AOSP v4): [0] platform 主区 (无内容时是 20B 空 gzip)
+  # + [1] recovery 片段 (TWRP rootfs, ~43MB)。必须选 recovery 片段,
+  # 不能选 platform 主区, 否则注入的是"没有 rootfs"的镜像 -> 无限重启。
+  # 选取逻辑: type==recovery 或 name=='recovery' 优先, 再比大小, 做尺寸硬校验。
   python3 - "$DEV_DIR" "$BUILT_IMG" "$WORK/twrp_ramdisk.cpio.gz" <<'PYEOF'
 import sys
 sys.path.insert(0, sys.argv[1])
-from vendor_boot_v4 import VendorBoot, TYPE_NAMES
+from vendor_boot_v4 import VendorBoot, TYPE_NAMES, NAME_TYPES
 vb = VendorBoot(open(sys.argv[2], 'rb').read())
 cands = [(e['size'], i, e) for i, e in enumerate(vb.entries)]
 if not cands:
     data, desc = vb.ramdisk, 'vendor_ramdisk 主区'
 else:
-    cands.sort(key=lambda t: (t[2]['type'] == 1, t[0]))  # recovery(type=1) 优先, 再比大小
+    # recovery 片段 = type==2 或 name=='recovery' (type 优先, 再比大小)。
+    # 平台主区(platform, 往往是 20B 空 gzip)绝不能选。
+    def _is_rec(t):
+        return t[2]['type'] == NAME_TYPES['recovery'] or t[2]['name'] == 'recovery'
+    cands.sort(key=lambda t: (_is_rec(t), t[0]))
     size, idx, e = cands[-1]
     data = vb.frag_bytes(idx)
     desc = 'fragment[%d] type=%s name=%r' % (idx, TYPE_NAMES.get(e['type'], e['type']), e['name'])
@@ -197,13 +203,16 @@ PYEOF
     echo "    拒绝产出会无限重启的镜像。" >&2
     exit 1
   fi
+  # 混合模式: 原厂 platform 片段(含 first_stage fstab)原样保留(type 不改),
+  # 丢弃原厂 recovery 片段, 追加 TWRP ramdisk 为 recovery 片段(放最后, 覆盖同名路径)。
+  # 不能用 --retag-recovery: 那会把原厂 platform 片段也改标成 recovery,
+  # normal boot 时 bootloader 就不会加载它 -> 又回到无限重启。
   PACK_ARGS=(
     --src "$STOCK_VENDOR_BOOT"
     --out "$WORK/vendor_boot.img"
     --platform "$WORK/twrp_ramdisk.cpio.gz"
     --platform-type recovery
     --drop-type recovery
-    --retag-recovery
     --add-cmdline "androidboot.selinux=permissive androidboot.hardware=mt6899 loglevel=8 ignore_loglevel"
     "${CMD_ARGS[@]}"
   )
@@ -249,18 +258,19 @@ if ! python3 "$PACKER" dump --src "$WORK/vendor_boot.img" | grep -q 'recovery'; 
   echo "package-vendor-boot: ::error:: 重打后的镜像里没有 recovery 片段" >&2
   exit 1
 fi
-# 混合模式下必须保留原厂 dlkm 片段 (normal boot 的 fstab 来源), 否则会无限重启
-if [ -f "$STOCK_VENDOR_BOOT" ] && ! python3 "$PACKER" dump --src "$WORK/vendor_boot.img" | grep -q 'dlkm'; then
-  echo "package-vendor-boot: ::error:: 混合模式下丢失了 dlkm 片段, normal boot 将无法启动!" >&2
+# 混合模式下必须保留原厂 platform 片段 (normal boot 的 fstab 来源), 否则会无限重启
+if [ -f "$STOCK_VENDOR_BOOT" ] && ! python3 "$PACKER" dump --src "$WORK/vendor_boot.img" | grep -q 'platform'; then
+  echo "package-vendor-boot: ::error:: 混合模式下丢失了原厂 platform 片段, normal boot 将无法启动!" >&2
   exit 1
 fi
 # recovery 片段必须有实际内容 (空 ramdisk = 刷入后 init 找不到 /init -> 无限重启)
 python3 - "$DEV_DIR" "$WORK/vendor_boot.img" <<'PYEOF'
 import sys
 sys.path.insert(0, sys.argv[1])
-from vendor_boot_v4 import VendorBoot
+from vendor_boot_v4 import VendorBoot, NAME_TYPES
 vb = VendorBoot(open(sys.argv[2], 'rb').read())
-rec = [e for e in vb.entries if e['type'] == 1]
+rec = [e for e in vb.entries
+       if e['type'] == NAME_TYPES['recovery'] or e['name'] == 'recovery']
 rec_sz = max([e['size'] for e in rec], default=vb.vendor_ramdisk_size)
 print('package-vendor-boot: recovery 片段实际大小 = %d bytes' % rec_sz)
 if rec_sz < 4194304:

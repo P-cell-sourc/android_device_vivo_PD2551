@@ -32,7 +32,16 @@ MAGIC = b'VNDRBOOT'
 HDR_SIZE_V4 = 2128
 ENTRY_SIZE_V4 = 108
 
-TYPE_NAMES = {0: 'platform', 1: 'recovery', 2: 'dlkm'}
+# AOSP bootimg.h vendor_ramdisk_type (v4): 官方枚举, 勿改!
+#   enum vendor_ramdisk_type {
+#       VENDOR_RAMDISK_TYPE_NONE     = 0,
+#       VENDOR_RAMDISK_TYPE_PLATFORM = 1,
+#       VENDOR_RAMDISK_TYPE_RECOVERY = 2,
+#       VENDOR_RAMDISK_TYPE_DLKM     = 3,
+#   };
+# 注意: 旧版曾错写为 {0:platform,1:recovery,2:dlkm}, 整体错位一位,
+# 导致把 20B 的空 platform 主区当成 recovery 片段 (CI Run 报"空 ramdisk"假警报)。
+TYPE_NAMES = {0: 'none', 1: 'platform', 2: 'recovery', 3: 'dlkm'}
 NAME_TYPES = {v: k for k, v in TYPE_NAMES.items()}
 
 
@@ -238,24 +247,31 @@ def main():
         # header v3 或表为空: 整个 vendor_ramdisk 就是一份 recovery ramdisk
         src_frags = [(src.ramdisk, NAME_TYPES['recovery'], 'recovery', [0] * 16)]
 
-    has_platform = any(f[1] == 0 for f in src_frags)
+    has_platform = any(f[1] == NAME_TYPES['platform'] for f in src_frags)
     use_platform = bool(a.platform) and not (a.platform_if_missing and has_platform)
 
     drop = {NAME_TYPES.get(t.strip(), -1) for t in a.drop_type.split(',') if t.strip()}
 
     frags = []
-    if use_platform:
-        frags.append((open(a.platform, 'rb').read(),
-                      NAME_TYPES[a.platform_type], a.platform_type, [0] * 16))
     for payload, typ, name, bid in src_frags:
         if typ in drop:
             continue
-        if typ == 0 and use_platform and not a.keep_platform:
+        # 仅当注入的是 platform 片段(替换语义)时才丢弃旧 platform;
+        # 混合模式注入的是 recovery 片段, 原厂 platform 片段必须原样保留
+        # (normal boot 的 fstab/first_stage 来源)。
+        if (a.platform_type == 'platform' and use_platform
+                and typ == NAME_TYPES['platform'] and not a.keep_platform):
             continue  # 用新 platform 替换旧的
         if a.retag_recovery and typ != NAME_TYPES['dlkm']:
             typ = NAME_TYPES['recovery']
             name = 'recovery'
         frags.append((payload, typ, name, bid))
+    # 注入片段放到最后: bootloader 按表顺序拼接 cpio, 后面的归档覆盖同名路径。
+    # 原厂镜像就是 platform 在前 / recovery 在后, recovery 片段的 /init
+    # 必须最后写入才能覆盖 platform 片段里的同名文件。
+    if use_platform:
+        frags.append((open(a.platform, 'rb').read(),
+                      NAME_TYPES[a.platform_type], a.platform_type, [0] * 16))
     if not frags:
         raise SystemExit('src 里没有可用的 recovery fragment')
 
